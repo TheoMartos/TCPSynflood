@@ -84,7 +84,7 @@ void fill_ip_header(IPHDR *ip_header)
 
 void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
 {
-    tcp_header->source = htons(SRC_PORT);
+    tcp_header->source = htons(get_rand());
     tcp_header->dest = htons(DST_PORT);
     tcp_header->seq = 0;
     tcp_header->ack_seq = 0;
