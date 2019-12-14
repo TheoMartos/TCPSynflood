@@ -95,11 +95,11 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
                 sin.sin_addr.s_addr = inet_addr(DST_IP);
 
                 if (sendto(socket_fd, packet, ip_header->tot_len, 0, (SOCKADDR *) &sin, sizeof(sin)) < 0)
-		        {
-			        printf("Error while sending packet.\n");
+                {
+                    printf("Error while sending packet.\n");
                     exit(-3);
-		        }
-		        else
+                }
+                else
                 {
                     this_thread::sleep_for(chrono::milliseconds(time_to_sleep));
                     packet_counter++;
@@ -186,19 +186,19 @@ unsigned short checksum(unsigned short *buffer, int nb_bytes)
 
 	while(nb_bytes > 1)
     {
-		check_sum += *buffer++;
-		nb_bytes -= sizeof(unsigned short);
-	}
+        check_sum += *buffer++;
+        nb_bytes -= sizeof(unsigned short);
+    }
 
-	if(nb_bytes == 1)
+    if(nb_bytes == 1)
     {
-		check_sum += *(unsigned char *)buffer;
-	}
+        check_sum += *(unsigned char *)buffer;
+    }
+    
+    check_sum = (check_sum >> 16) + (check_sum & 0xffff);
+    check_sum += (check_sum >> 16);
 
-	check_sum = (check_sum >> 16) + (check_sum & 0xffff);
-	check_sum += (check_sum >> 16);
-	
-	return (unsigned short)(~check_sum);
+    return (unsigned short)(~check_sum);
 }
 
 unsigned short get_rand()
