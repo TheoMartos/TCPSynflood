@@ -15,7 +15,7 @@
 #define SOCKET_ERROR -1
 #define PACKET_SIZE 4096
 
-#define SRC_IP "192.168.0.100"
+#define SRC_IP "192.168.0.18"
 #define DST_IP "192.168.0.11"
 #define SRC_PORT 25000
 #define DST_PORT 8080

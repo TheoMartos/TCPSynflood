@@ -28,10 +28,11 @@ int main(int argc, char *argv[])
         TCPHDR* tcp_header = (TCPHDR*)(packet + sizeof(struct ip));
         SOCKADDR_IN sin;
 
-        int one = 1;
-        if(setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0)
+        const int one = 1;
+        if(setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0 &&
+           setsockopt(socket_fd, IPPROTO_IP, IP_NODEFRAG, &one, sizeof(one)) < 0)
         {
-            printf("Error while setting socket option.\n");
+            printf("Error while setting socket options.\n");
             exit(-2);
         }
         else
@@ -95,7 +96,7 @@ void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
     tcp_header->psh = 0;
     tcp_header->ack = 0;
     tcp_header->urg = 0;
-    tcp_header->window = htons(5840);
+    tcp_header->window = htons(29200);
     tcp_header->check = 0;
     tcp_header->urg_ptr = 0;
 
@@ -118,29 +119,23 @@ void fill_tcp_header(TCPHDR *tcp_header, size_t data_len)
 
 unsigned short csum(unsigned short *ptr,int nbytes)
 {
-	long sum;
-	unsigned short oddbyte;
-	short answer;
+	unsigned long check_sum = 0;
 
-	sum = 0;
 	while(nbytes > 1)
     {
 		sum += *ptr++;
-		nbytes -= 2;
+		nbytes -= sizeof(unsigned short);
 	}
 
 	if(nbytes == 1)
     {
-		oddbyte = 0;
-		*((u_char*)&oddbyte) = *(u_char*)ptr;
-		sum += oddbyte;
+		check_sum += *(unsigned char *)ptr;
 	}
 
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum = sum + (sum >> 16);
-	answer = (short)~sum;
+	check_sum = (check_sum >> 16) + (check_sum & 0xffff);
+	check_sum += (check_sum >> 16);
 	
-	return(answer);
+	return (unsigned short)(~check_sum);;
 }
 
 unsigned short get_rand()
