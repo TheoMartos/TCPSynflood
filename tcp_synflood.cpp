@@ -123,7 +123,7 @@ unsigned short csum(unsigned short *ptr,int nbytes)
 
 	while(nbytes > 1)
     {
-		sum += *ptr++;
+		check_sum += *ptr++;
 		nbytes -= sizeof(unsigned short);
 	}
 
