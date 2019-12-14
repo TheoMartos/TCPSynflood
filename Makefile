@@ -19,7 +19,8 @@ clean:
 	rm -f $(OBJFILES) $(TARGET)
 
 mrproper: clean
-	rm -rf csv/*.csv
+	rm -rf obj/*
+	rm $(TARGET)
 
 depend:
 	makedepend -I. $(SRCS)

