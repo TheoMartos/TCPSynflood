@@ -31,5 +31,6 @@ typedef struct pseudo_header PSD_HEADER;
 
 void fill_ip_header(IPHDR *ip_header);
 void fill_tcp_header(TCPHDR *tcp_header, size_t data_len);
-unsigned short csum(unsigned short *ptr,int nbytes);
+unsigned short ip_checksum(unsigned short *ptr,int nbytes);
+unsigned short tcp_checksum(IPHDR *ip_header, TCPHDR *tcp_header);
 unsigned short get_rand();
