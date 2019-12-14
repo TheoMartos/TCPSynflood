@@ -103,7 +103,7 @@ void fill_tcp_opt(TCPOPT* tcp_opt)
 {
     tcp_opt->mms_knd = 2;
     tcp_opt->mms_len = 4;
-    tcp_opt->mms_val = 1440;
+    tcp_opt->mms_val = htons(1440);
     tcp_opt->nop_1 = 1;
     tcp_opt->ws_knd = 3;
     tcp_opt->ws_len = 3;
@@ -142,7 +142,7 @@ void fill_tcp_header(TCPHDR *tcp_header, TCPOPT* tcp_opt)
     char *buffer = (char *)malloc(p_size);
     memcpy(buffer, (char *)&pseudo_header, sizeof(PSD_HEADER));
     memcpy(buffer + sizeof(PSD_HEADER), tcp_header, sizeof(TCPHDR));
-    memcpy(buffer + sizeof(PSD_HEADER) + sizeof(TCPOPT), tcp_opt, sizeof(TCPOPT));
+    memcpy(buffer + sizeof(PSD_HEADER) + sizeof(TCPHDR), tcp_opt, sizeof(TCPOPT));
 
     tcp_header->check = checksum((unsigned short *)buffer, p_size);
     free(buffer);
