@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
     if(strlen(SRC_IP) > 0 && strlen(DST_IP) > 0)
     {
-        printf("Launching attack to %s:%d from %s every %d ms\n", DST_IP, DST_PORT, SRC_IP, SRC_PORT, sleep_time);
+        printf("Launching attack to %s:%d from %s every %d ms\n", DST_IP, DST_PORT, SRC_PORT, sleep_time);
         exploit(sleep_time, packet_to_send);
     }
     else
