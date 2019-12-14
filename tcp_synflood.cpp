@@ -101,17 +101,17 @@ void fill_ip_header(IPHDR *ip_header)
 
 void fill_tcp_opt(TCPOPT* tcp_opt)
 {
-    tcp_opt->mms_knd = htons(2);
-    tcp_opt->mms_len = htons(4);
-    tcp_opt->mms_val = htons(1440);
-    tcp_opt->nop_1 = htons(1);
-    tcp_opt->ws_knd = htons(3);
-    tcp_opt->ws_len = htons(3);
-    tcp_opt->ws_val = htons(8);
-    tcp_opt->nop_2 = htons(1);
-    tcp_opt->nop_3 = htons(1);
-    tcp_opt->sck_knd = htons(4);
-    tcp_opt->sck_len = htons(2);
+    tcp_opt->mms_knd = 2;
+    tcp_opt->mms_len = 4;
+    tcp_opt->mms_val = 1440;
+    tcp_opt->nop_1 = 1;
+    tcp_opt->ws_knd = 3;
+    tcp_opt->ws_len = 3;
+    tcp_opt->ws_val = 8;
+    tcp_opt->nop_2 = 1;
+    tcp_opt->nop_3 = 1;
+    tcp_opt->sck_knd = 4;
+    tcp_opt->sck_len = 2;
 }
 
 void fill_tcp_header(TCPHDR *tcp_header, TCPOPT* tcp_opt)
