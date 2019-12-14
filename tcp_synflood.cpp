@@ -11,9 +11,26 @@ struct pseudo_header
 	unsigned short tcp_length;
 };
 
+struct tcpopt
+{
+    unsigned char mms_knd = htons(2);
+    unsigned char mms_len = htons(4);
+    unsigned char mms_val = htons(1440);
+    unsigned char nop_1 = htons(1);
+    unsigned char ws_knd = htons(3);
+    unsigned char ws_len = htons(3);
+    unsigned char ws_val = htons(8);
+    unsigned char nop_2 = htons(1);
+    unsigned char nop_3 = htons(1);
+    unsigned char sck_knd = htons(4);
+    unsigned char sck_len = htons(2);
+};
+
 int main(int argc, char *argv[])
 {
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+
+    printf("%d\n", sizeof(tcpopt));
 
     if (socket_fd == SOCKET_ERROR)
     {
@@ -89,7 +106,7 @@ void fill_tcp_header(TCPHDR *tcp_header)
     tcp_header->dest = htons(DST_PORT);
     tcp_header->seq = 0;
     tcp_header->ack_seq = 0;
-    tcp_header->doff = 5;
+    tcp_header->doff = 8;
     tcp_header->fin = 0;
     tcp_header->syn = 1;
     tcp_header->rst = 0;

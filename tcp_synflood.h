@@ -27,6 +27,7 @@ typedef struct sockaddr SOCKADDR;
 typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct iphdr IPHDR;
 typedef struct tcphdr TCPHDR;
+typedef struct tcpopt TCPOPT;
 typedef struct pseudo_header PSD_HEADER;
 
 void fill_ip_header(IPHDR *ip_header);
