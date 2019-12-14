@@ -9,7 +9,6 @@ struct pseudo_header
 	unsigned char placeholder;
 	unsigned char protocol;
 	unsigned short tcp_length;
-	// TCPHDR tcp_header;
 };
 
 int main(int argc, char *argv[])
@@ -118,57 +117,25 @@ void fill_tcp_header(TCPHDR *tcp_header)
     pseudo_packet = nullptr;
 }
 
-unsigned short checksum(unsigned short *ptr, int nbytes)
+unsigned short checksum(unsigned short *buffer, int nb_bytes)
 {
 	unsigned long check_sum = 0;
 
-	while(nbytes > 1)
+	while(nb_bytes > 1)
     {
-		check_sum += *ptr++;
-		nbytes -= sizeof(unsigned short);
+		check_sum += *buffer++;
+		nb_bytes -= sizeof(unsigned short);
 	}
 
-	if(nbytes == 1)
+	if(nb_bytes == 1)
     {
-		check_sum += *(unsigned char *)ptr;
+		check_sum += *(unsigned char *)buffer;
 	}
 
 	check_sum = (check_sum >> 16) + (check_sum & 0xffff);
 	check_sum += (check_sum >> 16);
 	
-	return (unsigned short)(~check_sum);;
-}
-
-unsigned short tcp_checksum(IPHDR *ip_header, TCPHDR *tcp_header)
-{
-    unsigned long sum = 0;
-    unsigned short tcp_len = ip_header->tot_len - (ip_header->ihl << 2);
-
-    sum += (ip_header->saddr >> 16) & 0xFFFF;
-    sum += ip_header->saddr & 0xFFFF;
-
-    sum += (ip_header->daddr >> 16) & 0xFFFF;
-    sum += ip_header->daddr & 0xFFFF;
-
-    sum += htons(IPPROTO_TCP);
-    sum += htons(tcp_len);
-
-    tcp_header->check = 0;
-    while (tcp_len > 1)
-    {
-        sum += *(unsigned short *)tcp_header++;
-        tcp_len -= 2;
-    }
-
-    if (tcp_len > 0)
-        sum += *(unsigned short *)tcp_header & htons(0xFF00);
-
-    while (sum >> 16)
-        sum = (sum & 0xFFFF) + (sum >> 16);
-
-    sum = ~sum;
-
-    return sum;
+	return (unsigned short)(~check_sum);
 }
 
 unsigned short get_rand()
