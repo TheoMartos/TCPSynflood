@@ -19,11 +19,6 @@
 #define PACKET_SIZE 4096
 #define IP_SIZE sizeof("255.255.255.255")
 
-// #define SRC_IP "192.168.0.18"
-// #define DST_IP "192.168.0.11"
-// #define SRC_PORT 25000
-// #define DST_PORT 8080
-
 struct pseudo_header;
 
 typedef int SOCKET;
