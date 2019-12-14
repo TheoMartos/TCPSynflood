@@ -156,7 +156,7 @@ unsigned short get_rand()
     else
     {
         cerr << "Failed to open stream /dev/urandom" << endl;
-        random_value = 35789
+        random_value = 35789;
     }
 
     return random_value;
