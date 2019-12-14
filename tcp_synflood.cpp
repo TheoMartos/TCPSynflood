@@ -13,24 +13,22 @@ struct pseudo_header
 
 struct tcpopt
 {
-    unsigned char mms_knd = htons(2);
-    unsigned char mms_len = htons(4);
-    unsigned char mms_val = htons(1440);
-    unsigned char nop_1 = htons(1);
-    unsigned char ws_knd = htons(3);
-    unsigned char ws_len = htons(3);
-    unsigned char ws_val = htons(8);
-    unsigned char nop_2 = htons(1);
-    unsigned char nop_3 = htons(1);
-    unsigned char sck_knd = htons(4);
-    unsigned char sck_len = htons(2);
+    unsigned char mms_knd;
+    unsigned char mms_len;
+    unsigned short mms_val;
+    unsigned char nop_1;
+    unsigned char ws_knd;
+    unsigned char ws_len;
+    unsigned char ws_val;
+    unsigned char nop_2;
+    unsigned char nop_3;
+    unsigned char sck_knd;
+    unsigned char sck_len;
 };
 
 int main(int argc, char *argv[])
 {
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
-
-    printf("%d\n", sizeof(tcpopt));
 
     if (socket_fd == SOCKET_ERROR)
     {
@@ -39,9 +37,10 @@ int main(int argc, char *argv[])
     }
     else
     {
-        char packet[PACKET_SIZE], *data;
-        IPHDR* ip_header = (IPHDR*)packet;
-        TCPHDR* tcp_header = (TCPHDR*)(packet + sizeof(struct ip));
+        char packet[PACKET_SIZE];
+        IPHDR *ip_header = (IPHDR *)packet;
+        TCPHDR *tcp_header = (TCPHDR *)(packet + sizeof(IPHDR));
+        TCPOPT *tcp_opt = (TCPOPT *)(packet + sizeof(IPHDR) + sizeof(TCPHDR));
         SOCKADDR_IN sin;
 
         const int one = 1;
@@ -57,8 +56,8 @@ int main(int argc, char *argv[])
             {
                 memset(packet, 0, PACKET_SIZE);
                 fill_ip_header(ip_header);
-                fill_tcp_header(tcp_header);
-                // tcp_header->check = tcp_checksum(ip_header, tcp_header);
+                fill_tcp_opt(tcp_opt);
+                fill_tcp_header(tcp_header, tcp_opt);
 
                 sin.sin_family = AF_INET;
                 sin.sin_port = htons(DST_PORT);
@@ -88,7 +87,7 @@ void fill_ip_header(IPHDR *ip_header)
     ip_header->version = 4;
     ip_header->ihl = 5;
     ip_header->tos = 0;
-    ip_header->tot_len = sizeof(IPHDR) + sizeof(TCPHDR);
+    ip_header->tot_len = sizeof(IPHDR) + sizeof(TCPHDR) + sizeof(TCPOPT);
     ip_header->id = htons(packet_id);
     ip_header->frag_off = 0;
     ip_header->ttl = 64;
@@ -100,7 +99,22 @@ void fill_ip_header(IPHDR *ip_header)
     ip_header->check = checksum((unsigned short *)ip_header, ip_header->tot_len);
 }
 
-void fill_tcp_header(TCPHDR *tcp_header)
+void fill_tcp_opt(TCPOPT* tcp_opt)
+{
+    tcp_opt->mms_knd = htons(2);
+    tcp_opt->mms_len = htons(4);
+    tcp_opt->mms_val = htons(1440);
+    tcp_opt->nop_1 = htons(1);
+    tcp_opt->ws_knd = htons(3);
+    tcp_opt->ws_len = htons(3);
+    tcp_opt->ws_val = htons(8);
+    tcp_opt->nop_2 = htons(1);
+    tcp_opt->nop_3 = htons(1);
+    tcp_opt->sck_knd = htons(4);
+    tcp_opt->sck_len = htons(2);
+}
+
+void fill_tcp_header(TCPHDR *tcp_header, TCPOPT* tcp_opt)
 {
     tcp_header->source = htons(get_rand());
     tcp_header->dest = htons(DST_PORT);
@@ -122,16 +136,17 @@ void fill_tcp_header(TCPHDR *tcp_header)
     pseudo_header.dest_address = inet_addr(DST_IP);
     pseudo_header.placeholder = 0;
     pseudo_header.protocol = IPPROTO_TCP;
-    pseudo_header.tcp_length = htons(sizeof(TCPHDR));
+    pseudo_header.tcp_length = htons(sizeof(TCPHDR) + sizeof(TCPOPT));
 
-    int p_size = sizeof(PSD_HEADER) + sizeof(TCPHDR);
-    char *pseudo_packet = (char *)malloc(p_size);
-    memcpy(pseudo_packet, (char *)&pseudo_header, sizeof(PSD_HEADER));
-    memcpy(pseudo_packet + sizeof(PSD_HEADER), tcp_header, sizeof(TCPHDR));
+    int p_size = sizeof(PSD_HEADER) + sizeof(TCPHDR) + sizeof(TCPOPT);
+    char *buffer = (char *)malloc(p_size);
+    memcpy(buffer, (char *)&pseudo_header, sizeof(PSD_HEADER));
+    memcpy(buffer + sizeof(PSD_HEADER), tcp_header, sizeof(TCPHDR));
+    memcpy(buffer + sizeof(PSD_HEADER) + sizeof(TCPOPT), tcp_opt, sizeof(TCPOPT));
 
-    tcp_header->check = checksum((unsigned short *)pseudo_packet, p_size);
-    free(pseudo_packet);
-    pseudo_packet = nullptr;
+    tcp_header->check = checksum((unsigned short *)buffer, p_size);
+    free(buffer);
+    buffer = nullptr;
 }
 
 unsigned short checksum(unsigned short *buffer, int nb_bytes)
