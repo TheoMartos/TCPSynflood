@@ -1,5 +1,5 @@
 CC       = g++
-CFLAGS   = -Wall
+CFLAGS   = -Wall -std=c11 -lpthread
 LDFLAGS  =
 SRCS     = tcp_synflood.cpp
 OBJFILES = tcp_synflood.o
