@@ -70,7 +70,7 @@ int main(int argc, char **argv)
         // Creating threads
         for(int i = 0; i < threads_count; i++)
         {
-            std::thread th(exploit, sleep_time, packet_to_send);
+            thread th(exploit, sleep_time, packet_to_send);
             threads.push_back(move(th));
         }
 
